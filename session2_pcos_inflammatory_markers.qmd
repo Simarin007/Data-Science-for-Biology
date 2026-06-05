@@ -1,0 +1,498 @@
+---
+title: "Session 2: PCOS and Inflammatory Markers in Menstrual Cycle"
+author: "Data Science for Biology Workshop"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: false
+  pdf:
+    toc: true
+    toc-depth: 3
+  docx:
+    toc: true
+    toc-depth: 3
+execute:
+  warning: false
+  message: false
+editor: visual
+---
+
+```{r setup, include=FALSE}
+# ============================================================================
+# Setup: Load packages, set options
+# ============================================================================
+
+library(tidyverse)
+library(gtsummary)
+library(ggpubr)
+library(lmerTest)
+library(flextable)
+library(officer)
+library(knitr)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Output directory
+output_dir <- "."
+```
+
+## Research Question
+
+> **Do inflammatory marker levels differ between participants with PCOS and participants without PCOS after accounting for menstrual-cycle stage?**
+
+In this analysis we compare inflammatory cytokine concentrations between participants diagnosed with PCOS and those with no disease, while adjusting for the time point (menstrual-cycle stage) as a covariate.
+
+------------------------------------------------------------------------
+
+## Data Import
+
+```{r data-import}
+# ============================================================================
+# Read all CSV files from the dataset directory
+# ============================================================================
+
+# Participant metadata: age, PCOS status, arm, period product, sex
+participant_meta <- read_csv("data/group_b_menstruation/01_participant_metadata_period.csv",
+                             show_col_types = FALSE)
+
+# Sample IDs mapping: links participants to their samples across time points
+sample_ids <- read_csv("data/group_b_menstruation/00_sample_ids_period.csv",
+                       show_col_types = FALSE)
+
+# Luminex cytokine concentrations
+luminex <- read_csv("data/group_b_menstruation/02_luminex_period.csv",
+                    show_col_types = FALSE)
+
+# Preview each dataset
+glimpse(participant_meta)
+glimpse(sample_ids)
+glimpse(luminex)
+```
+
+## Data Validation
+
+```{r data-validation}
+# ============================================================================
+# Validate key identifiers and merge datasets
+# ============================================================================
+
+# --- Participant metadata checks ---
+cat("Number of participants:", n_distinct(participant_meta$pid), "\n")
+cat("PCOS status levels:", unique(participant_meta$pcos_status), "\n")
+cat("Sex levels:", unique(participant_meta$sex), "\n")
+cat("Arms:", unique(participant_meta$arm), "\n")
+cat("Period products:", unique(participant_meta$period_product), "\n")
+
+# --- Sample ID checks ---
+cat("\nNumber of samples:", n_distinct(sample_ids$sample_id), "\n")
+cat("Time points:", unique(sample_ids$time_point), "\n")
+cat("Unique PIDs in sample_ids:", n_distinct(sample_ids$pid), "\n")
+
+# Check that all PIDs in sample_ids exist in participant_meta
+pid_in_both <- all(sample_ids$pid %in% participant_meta$pid)
+cat("\nAll sample PIDs found in participant metadata:", pid_in_both, "\n")
+
+# --- Luminex checks ---
+cat("\nUnique cytokines:", unique(luminex$cytokine), "\n")
+cat("Number of cytokines:", n_distinct(luminex$cytokine), "\n")
+cat("Unique sample IDs in luminex:", n_distinct(luminex$sample_id), "\n")
+
+# Check that all luminex sample IDs exist in sample_ids
+sample_in_both <- all(luminex$sample_id %in% sample_ids$sample_id)
+cat("All luminex sample IDs found in sample_ids:", sample_in_both, "\n")
+
+# --- Merge into analysis dataset ---
+# Step 1: Join sample_ids with participant_meta
+# Both datasets have 'arm', so we keep it from participant_meta
+analysis_data <- sample_ids %>%
+  left_join(participant_meta, by = c("pid", "arm"))
+
+# Step 2: Join with luminex
+analysis_data <- analysis_data %>%
+  left_join(luminex, by = "sample_id")
+
+# Step 3: Create log-transformed concentration
+# log1p = log(1 + x) handles zeros gracefully
+analysis_data <- analysis_data %>%
+  mutate(log_conc = log1p(conc))
+
+# Final dataset: select the columns we need
+analysis_data <- analysis_data %>%
+  select(pid, pcos_status, age, arm, period_product, time_point,
+         cytokine, conc, log_conc)
+
+# Remove any rows with missing cytokines (no luminex measurement)
+analysis_data <- analysis_data %>%
+  filter(!is.na(cytokine))
+
+cat("\nFinal analysis dataset dimensions:", dim(analysis_data), "\n")
+cat("Number of participants:", n_distinct(analysis_data$pid), "\n")
+cat("Number of observations:", nrow(analysis_data), "\n")
+
+glimpse(analysis_data)
+```
+
+------------------------------------------------------------------------
+
+## Table 1: Participant Characteristics by PCOS Status
+
+```{r table1}
+# ============================================================================
+# Create Table 1 using gtsummary, grouped by pcos_status
+# ============================================================================
+
+# Use distinct participant-level data (one row per participant)
+participant_tbl <- participant_meta %>%
+  distinct(pid, .keep_all = TRUE)
+
+# Remove 'sex' if it has only one level — it does (all "female")
+sex_levels <- unique(participant_tbl$sex)
+cat("Sex levels:", sex_levels, "\n")
+
+# Build Table 1
+tbl1 <- participant_tbl %>%
+  select(pcos_status, age, arm, period_product) %>%
+  tbl_summary(
+    by = pcos_status,
+    label = list(
+      age ~ "Age (years)",
+      arm ~ "Birth control use",
+      period_product ~ "Period product"
+    ),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = list(age ~ c(1, 1))
+  ) %>%
+  add_p() %>%
+  add_overall()
+
+# Display in document
+tbl1
+
+# Export to HTML
+tbl1 %>%
+  as_flex_table() %>%
+  flextable::save_as_html(path = "Table_1_PCOS_vs_NoDisease.html")
+
+# Export to Word
+tbl1 %>%
+  as_flex_table() %>%
+  flextable::save_as_docx(path = "Table_1_PCOS_vs_NoDisease.docx")
+
+cat("Table 1 saved to Table_1_PCOS_vs_NoDisease.html and .docx\n")
+```
+
+------------------------------------------------------------------------
+
+## Cytokine Comparison Figure
+
+```{r cytokine-figure, fig.width=12, fig.height=10}
+# ============================================================================
+# Boxplots of log-transformed cytokine concentrations by PCOS status
+# ============================================================================
+
+# Detect cytokines dynamically from the data
+cytokines <- unique(analysis_data$cytokine)
+cat("Cytokines detected:", paste(cytokines, collapse = ", "), "\n")
+
+# Create the boxplot
+p <- analysis_data %>%
+  ggboxplot(x = "pcos_status", y = "log_conc",
+            color = "pcos_status",
+            palette = c("#E69F00", "#56B4E9"),
+            add = "jitter",
+            add.params = list(alpha = 0.4, size = 1.2)) +
+  stat_compare_means(method = "wilcox.test",
+                     label = "p.signif",
+                     hide.ns = FALSE,
+                     size = 3.5) +
+  facet_wrap(~ cytokine, scales = "free_y", ncol = 4) +
+  labs(title = "Inflammatory marker levels in PCOS and non-PCOS participants",
+       x = "PCOS Status",
+       y = "log(1 + concentration)") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    strip.text = element_text(face = "bold", size = 11),
+    legend.position = "bottom"
+  )
+
+print(p)
+
+# Save as PNG
+ggsave("Figure_1_Cytokine_Comparison.png", plot = p,
+       width = 12, height = 10, dpi = 300)
+
+# Save as PDF
+ggsave("Figure_1_Cytokine_Comparison.pdf", plot = p,
+       width = 12, height = 10)
+
+cat("Figure saved to Figure_1_Cytokine_Comparison.png and .pdf\n")
+```
+
+------------------------------------------------------------------------
+
+## Mixed-Effects Model
+
+```{r mixed-model}
+# ============================================================================
+# Fit a linear mixed-effects model for each cytokine
+# Formula: log_conc ~ pcos_status + time_point + (1 | pid)
+#   - pcos_status: fixed effect of interest (PCOS vs no disease)
+#   - time_point: adjustment for menstrual-cycle stage
+#   - (1 | pid): random intercept per participant (accounts for repeated measures)
+# ============================================================================
+
+# Get unique cytokines
+cytokines <- unique(analysis_data$cytokine)
+
+# Create a results dataframe
+model_results <- data.frame()
+
+for (cyt in cytokines) {
+  # Subset data for this cytokine
+  sub_data <- analysis_data %>%
+    filter(cytokine == cyt) %>%
+    mutate(
+      # Ensure pcos_status is a factor with "no disease" as reference
+      pcos_status = factor(pcos_status, levels = c("no disease", "pcos")),
+      # Ensure time_point is a factor for the model
+      time_point = factor(time_point, levels = c("week_prior", "onset",
+                                                  "end_bleeding", "week_post"))
+    )
+
+  # Fit the mixed-effects model
+  # Using lmerTest which provides p-values via Satterthwaite approximation
+  fit <- lmer(log_conc ~ pcos_status + time_point + (1 | pid),
+              data = sub_data)
+
+  # Extract the coefficient for pcos_status (PCOS vs no disease)
+  coef_summary <- summary(fit)$coefficients
+
+  # Find the row for pcos_status (it will be "pcos_statuspcos")
+  pcos_row <- grep("pcos_status", rownames(coef_summary))
+
+  # Get confidence interval
+  ci <- confint(fit, parm = "pcos_statuspcos", method = "Wald")
+
+  # Store results
+  row_result <- data.frame(
+    cytokine = cyt,
+    estimate = coef_summary[pcos_row, "Estimate"],
+    std_error = coef_summary[pcos_row, "Std. Error"],
+    ci_lower = ci[1],
+    ci_upper = ci[2],
+    p_value = coef_summary[pcos_row, "Pr(>|t|)"],
+    n_obs = nrow(sub_data),
+    n_participants = n_distinct(sub_data$pid),
+    stringsAsFactors = FALSE
+  )
+
+  model_results <- rbind(model_results, row_result)
+}
+
+# Apply Benjamini-Hochberg correction across all cytokines
+model_results$p_adjusted <- p.adjust(model_results$p_value, method = "BH")
+
+# Sort by adjusted p-value
+model_results <- model_results %>%
+  arrange(p_adjusted)
+
+# Display results
+kable(model_results, digits = 4,
+      caption = "Mixed-effects model results: PCOS effect on log cytokine concentration")
+
+# Write to CSV
+write_csv(model_results, "Model_Results_PCOS_Cytokines.csv")
+cat("Model results saved to Model_Results_PCOS_Cytokines.csv\n")
+```
+
+## Model Results Summary
+
+```{r model-summary}
+# ============================================================================
+# Highlight which cytokines are significant after BH correction
+# ============================================================================
+
+cat("=== Cytokines with significant PCOS effect (BH-adjusted p < 0.05) ===\n")
+significant <- model_results %>% filter(p_adjusted < 0.05)
+if (nrow(significant) > 0) {
+  print(significant %>% select(cytokine, estimate, p_value, p_adjusted))
+} else {
+  cat("No cytokines reached statistical significance after BH correction.\n")
+}
+
+cat("\n=== All cytokines ranked by adjusted p-value ===\n")
+print(model_results %>% select(cytokine, estimate, ci_lower, ci_upper, p_value, p_adjusted))
+```
+
+------------------------------------------------------------------------
+
+## Regression Table
+
+```{r regression-table}
+# ============================================================================
+# Create a regression table using tbl_regression() for the first cytokine
+# as a representative model, then build a combined table showing PCOS
+# coefficients across all cytokines
+# ============================================================================
+
+# Fit a model on the complete dataset (all cytokines) to show as a single
+# regression table using the first cytokine as a detailed example
+first_cyt <- cytokines[1]
+sub_data_first <- analysis_data %>%
+  filter(cytokine == first_cyt) %>%
+  mutate(
+    pcos_status = factor(pcos_status, levels = c("no disease", "pcos")),
+    time_point = factor(time_point, levels = c("week_prior", "onset",
+                                                "end_bleeding", "week_post"))
+  )
+
+fit_first <- lmer(log_conc ~ pcos_status + time_point + (1 | pid),
+                  data = sub_data_first)
+
+# Create regression table with tbl_regression
+reg_table <- fit_first %>%
+  tbl_regression(
+    label = list(
+      pcos_status ~ "PCOS status",
+      time_point ~ "Time point"
+    ),
+    estimate_fun = ~ style_number(.x, digits = 3),
+    pvalue_fun = ~ style_pvalue(.x, digits = 3)
+  ) %>%
+  add_global_p() %>%
+  bold_p()
+
+# Display
+reg_table
+
+# Export as Word document
+reg_table %>%
+  as_flex_table() %>%
+  save_as_docx(path = "Model_Table_PCOS.docx")
+
+cat("Regression table saved to Model_Table_PCOS.docx\n")
+```
+
+### Cross-Cytokine PCOS Coefficient Summary
+
+```{r cross-cytokine-table}
+# ============================================================================
+# Build a combined table showing the PCOS coefficient for each cytokine
+# ============================================================================
+
+# Create a flextable from model results for reporting
+cross_table <- model_results %>%
+  mutate(
+    across(c(estimate, std_error, ci_lower, ci_upper), ~ round(.x, 3)),
+    across(c(p_value, p_adjusted), ~ round(.x, 4)),
+    significant = ifelse(p_adjusted < 0.05, "Yes", "No"),
+    ci = paste0("(", ci_lower, ", ", ci_upper, ")")
+  ) %>%
+  select(cytokine, estimate, std_error, ci, p_value, p_adjusted, significant) %>%
+  flextable() %>%
+  set_header_labels(
+    cytokine = "Cytokine",
+    estimate = "Estimate",
+    std_error = "SE",
+    ci = "95% CI",
+    p_value = "p-value",
+    p_adjusted = "BH-adjusted p",
+    significant = "Significant"
+  ) %>%
+  theme_booktabs() %>%
+  autofit()
+
+cross_table
+```
+
+------------------------------------------------------------------------
+
+## Results Interpretation
+
+```{r interpretation}
+# ============================================================================
+# Automatically generate interpretation based on model results
+# ============================================================================
+
+n_participants <- n_distinct(analysis_data$pid)
+n_pcos <- n_distinct(analysis_data$pid[analysis_data$pcos_status == "pcos"])
+n_nodisease <- n_distinct(analysis_data$pid[analysis_data$pcos_status == "no disease"])
+n_samples_total <- nrow(analysis_data) / length(cytokines)  # per cytokine
+n_cytokines <- length(cytokines)
+
+cat("============================================================\n")
+cat("             SESSION 2 INTERPRETATION\n")
+cat("============================================================\n\n")
+
+cat("Research Question:\n")
+cat("Do inflammatory marker levels differ between participants with PCOS\n")
+cat("and participants without PCOS after accounting for menstrual-cycle stage?\n\n")
+
+cat("Sample Sizes:\n")
+cat("  Total participants:", n_participants, "\n")
+cat("    PCOS:", n_pcos, "\n")
+cat("    No disease:", n_nodisease, "\n")
+cat("  Total samples per cytokine:", n_samples_total, "\n")
+cat("  Cytokines analyzed:", n_cytokines, "\n\n")
+
+cat("Key Findings:\n\n")
+
+sig_cytokines <- model_results %>%
+  filter(p_adjusted < 0.05)
+
+if (nrow(sig_cytokines) == 0) {
+  cat("After fitting a linear mixed-effects model (log_conc ~ pcos_status + time_point + (1|pid))\n")
+  cat("with Benjamini-Hochberg correction for multiple testing across", n_cytokines, "cytokines,\n")
+  cat("none of the inflammatory markers showed a statistically significant difference\n")
+  cat("between PCOS and non-PCOS participants at the adjusted significance threshold (alpha = 0.05).\n\n")
+
+  # Show the closest to significance
+  top_cyt <- model_results %>% slice_min(p_adjusted, n = 1)
+  cat("The cytokine closest to significance was", top_cyt$cytokine[1],
+      "(BH-adjusted p =", round(top_cyt$p_adjusted[1], 4), ").\n\n")
+} else {
+  cat("After fitting linear mixed-effects models (log_conc ~ pcos_status + time_point + (1|pid))\n")
+  cat("with Benjamini-Hochberg correction for multiple testing, the following cytokine(s)\n")
+  cat("showed statistically significant differences between PCOS and non-PCOS participants:\n\n")
+
+  for (i in seq_len(nrow(sig_cytokines))) {
+    cyt <- sig_cytokines$cytokine[i]
+    est <- round(sig_cytokines$estimate[i], 3)
+    ci_l <- round(sig_cytokines$ci_lower[i], 3)
+    ci_u <- round(sig_cytokines$ci_upper[i], 3)
+    p_adj <- round(sig_cytokines$p_adjusted[i], 4)
+    direction <- ifelse(est > 0, "higher", "lower")
+
+    cat("  -", cyt, ": estimate =", est, "(", ci_l, ",", ci_u, "),\n")
+    cat("    BH-adjusted p =", p_adj, "\n")
+    cat("    Interpretation:", cyt, "levels were", direction, "in PCOS participants\n")
+    cat("    compared to non-PCOS participants after adjusting for menstrual-cycle stage.\n\n")
+  }
+}
+
+cat("Statistical Methods:\n")
+cat("  - Linear mixed-effects models with random intercepts per participant\n")
+cat("  - Fixed effects: PCOS status (primary predictor), time point (adjustment)\n")
+cat("  - Multiple testing correction: Benjamini-Hochberg (BH) procedure\n")
+cat("  - Log transformation: log1p (log(1 + concentration))\n\n")
+
+cat("Important Caveat:\n")
+cat("  This is an exploratory analysis. The relatively small sample size limits\n")
+cat("  statistical power. Results should be interpreted cautiously and validated\n")
+cat("  in larger, independent cohorts.\n")
+cat("============================================================\n")
+```
+
+------------------------------------------------------------------------
+
+## Session Information
+
+```{r session-info}
+sessionInfo()
+```

@@ -1,0 +1,131 @@
+---
+title: "Figure 1 — Cytokine Comparison with Model-Based p-values"
+author: "Data Science for Biology Workshop"
+format: pdf
+execute:
+  warning: false
+  message: false
+editor: visual
+---
+
+```{r setup, include=FALSE}
+# ============================================================================
+# Setup: Load packages
+# ============================================================================
+
+library(tidyverse)
+library(ggpubr)
+
+set.seed(42)
+```
+
+## Data Import & Merge
+
+```{r data-import, include=FALSE}
+# ============================================================================
+# Read and merge raw data (same pipeline as session2)
+# ============================================================================
+
+participant_meta <- read_csv("data/group_b_menstruation/01_participant_metadata_period.csv",
+                             show_col_types = FALSE)
+sample_ids <- read_csv("data/group_b_menstruation/00_sample_ids_period.csv",
+                       show_col_types = FALSE)
+luminex <- read_csv("data/group_b_menstruation/02_luminex_period.csv",
+                    show_col_types = FALSE)
+
+analysis_data <- sample_ids %>%
+  left_join(participant_meta, by = c("pid", "arm")) %>%
+  left_join(luminex, by = "sample_id") %>%
+  mutate(log_conc = log1p(conc)) %>%
+  select(pid, pcos_status, age, arm, period_product, time_point,
+         cytokine, conc, log_conc) %>%
+  filter(!is.na(cytokine))
+```
+
+## Load Model Results
+
+```{r load-model-results, include=FALSE}
+# ============================================================================
+# Read the mixed-effects model results
+# Model: log_conc ~ pcos_status + time_point + (1|pid)
+# ============================================================================
+
+model_results <- read_csv("Model_Results_PCOS_Cytokines.csv",
+                          show_col_types = FALSE)
+
+# Build annotation labels — one clean BH-adjusted p-value per cytokine
+pval_anno <- model_results %>%
+  mutate(
+    # Format: "adj. p = 0.332" (three decimal places for non-significant)
+    label = case_when(
+      p_adjusted < 0.001 ~ "adj. p < 0.001",
+      p_adjusted < 0.01  ~ paste0("adj. p = ", sprintf("%.3f", p_adjusted)),
+      p_adjusted < 0.05  ~ paste0("adj. p = ", sprintf("%.3f", p_adjusted)),
+      TRUE               ~ paste0("adj. p = ", sprintf("%.3f", p_adjusted))
+    )
+  ) %>%
+  select(cytokine, label)
+```
+
+## Figure 1 — Cytokine Comparison with BH-Adjusted p-values
+
+```{r cytokine-figure, fig.width=12, fig.height=10}
+# ============================================================================
+# Boxplots of log-transformed cytokine concentrations by PCOS status
+# Each panel annotated with Benjamini-Hochberg adjusted p-value
+# from the linear mixed-effects model
+# ============================================================================
+
+# Compute y-position for each cytokine panel (place label at top-right)
+anno_positions <- analysis_data %>%
+  group_by(cytokine) %>%
+  summarise(
+    y_max = max(log_conc, na.rm = TRUE),
+    y_range = diff(range(log_conc, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  left_join(pval_anno, by = "cytokine") %>%
+  mutate(
+    x = 1.5,
+    y = y_max + y_range * 0.10
+  )
+
+# Create the boxplot
+p <- analysis_data %>%
+  ggboxplot(x = "pcos_status", y = "log_conc",
+            color = "pcos_status",
+            palette = c("#0072B5", "#BC3C29"),
+            add = "jitter",
+            add.params = list(alpha = 0.35, size = 1.2)) +
+  facet_wrap(~ cytokine, scales = "free_y", ncol = 4) +
+  labs(title = "Inflammatory Marker Levels by PCOS Status",
+       subtitle = "p-values from linear mixed-effects model, BH-adjusted for multiple testing",
+       x = NULL,
+       y = "log(1 + concentration)") +
+  theme_bw() +
+  theme(
+    plot.title    = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 9, colour = "grey40"),
+    strip.text    = element_text(face = "bold", size = 11),
+    axis.title.y  = element_text(size = 11),
+    legend.title  = element_blank(),
+    legend.text   = element_text(size = 10),
+    legend.position = "bottom"
+  )
+
+# Add one clean p-value annotation per panel
+p <- p + geom_text(
+  data = anno_positions,
+  aes(x = x, y = y, label = label),
+  size     = 3.2,
+  colour   = "grey30",
+  fontface = "italic",
+  inherit.aes = FALSE
+)
+
+print(p)
+
+# Save figure
+ggsave("Figure_1_Cytokine_Comparison_with_pvalues.pdf",
+       plot = p, width = 12, height = 10, dpi = 300)
+```

@@ -1,0 +1,236 @@
+---
+title: "Data Dictionary — Menstrual Cycle Dataset (Group B)"
+subtitle: "What each table means, row by row and column by column"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+
+data_dir <- here::here("data", "group_b_menstruation")
+```
+
+## Overview
+
+This dataset comes from a study on the **menstrual cycle** (Group B). It contains
+four related CSV files that describe samples, participant metadata, cytokine
+concentrations measured by Luminex, and immune cell counts measured by flow
+cytometry. The tables are linked by the `sample_id` column, and participants are
+identified by `pid`.
+
+## 1. `00_sample_ids_period.csv`
+
+```{r}
+#| label: load-sample-ids
+sample_ids <- read_csv(file.path(data_dir, "00_sample_ids_period.csv"))
+glimpse(sample_ids)
+```
+
+**What a single row represents:** one biological sample collected from a
+participant at a specific time point relative to their menstrual period, giving
+it a unique `sample_id`.
+
+| Column | Type | Meaning |
+|--------|------|---------|
+| `pid` | character | Participant ID (e.g. `pid_01`, `pid_12`). Links to `01_participant_metadata_period.csv`. |
+| `time_point` | character | When the sample was taken relative to the period: `onset` (start of bleeding), `end_bleeding`, `week_prior` (one week before), or `week_post` (one week after). |
+| `arm` | character | Study arm: `birth_control` or `no_birth_control`. |
+| `sample_id` | character | **Unique** sample identifier (e.g. `SAMP001`). Used to link to the Luminex and flow cytometry tables. |
+
+This is the **linking table**: it connects sample IDs to participants and time
+points. Each participant may appear multiple times (once for each time point at
+which they provided a sample).
+
+---
+
+## 2. `01_participant_metadata_period.csv`
+
+```{r}
+#| label: load-metadata
+metadata <- read_csv(file.path(data_dir, "01_participant_metadata_period.csv"))
+glimpse(metadata)
+```
+
+**What a single row represents:** one study participant, with their demographic
+and clinical characteristics.
+
+| Column | Type | Meaning |
+|--------|------|---------|
+| `pid` | character | Participant ID. Primary key — each participant appears exactly once. |
+| `arm` | character | Study arm: `birth_control` or `no_birth_control`. |
+| `age` | numeric | Age of the participant in years (range 26–41). |
+| `pcos_status` | character | Polycystic Ovary Syndrome status: `no disease` or `pcos`. |
+| `period_product` | character | Menstrual product used: `tampon`, `pad`, or `menstrual_cup`. |
+| `sex` | character | Sex assigned at birth. All entries are `female`. |
+
+This table gives you **background info** about each participant that you can use
+to group or colour-code your plots (e.g. by PCOS status or age).
+
+---
+
+## 3. `02_luminex_period.csv`
+
+```{r}
+#| label: load-luminex
+luminex <- read_csv(file.path(data_dir, "02_luminex_period.csv"))
+glimpse(luminex)
+```
+
+**What a single row represents:** the measured concentration of **one cytokine**
+in **one sample**. The table is in **long (tidy) format** — each sample appears
+in 8 rows (one per cytokine).
+
+| Column | Type | Meaning |
+|--------|------|---------|
+| `sample_id` | character | Which sample this measurement comes from. Links to `00_sample_ids_period.csv`. |
+| `cytokine` | character | The name of the cytokine or chemokine being measured. Eight targets: `IL-1a`, `IL-1b`, `IL-6`, `TNFa`, `MIG`, `IFNg`, `IP-10`, `MIP-3a`. |
+| `conc` | numeric | Concentration (pg/mL) as measured by the Luminex assay. |
+| `limits` | character | Quality flag: `not_censored` (value is reliable), `below_detection_limit` (too low to measure accurately), or `above_detect_limit` (too high — the assay maxed out). |
+
+> ⚠️ **Censored values:** When `limits` is `below_detection_limit`, the `conc`
+> column contains the assay's **detection limit** for that cytokine (a fixed
+> number per cytokine — e.g. 0.09 for IL-6, 0.24 for IL-1b, 1.53 for MIG).
+> The true concentration is somewhere below this value. For
+> `above_detect_limit` (only SAMP044's IL-1a at 2500 pg/mL), the true value is
+> above the reported number. Decide how to handle censored data in your
+> analysis (common approaches: treat as missing, keep the detection limit as-is,
+> or impute).
+
+```{r}
+#| label: censoring-summary
+luminex |>
+  count(limits, cytokine) |>
+  pivot_wider(names_from = limits, values_from = n, values_fill = 0)
+```
+
+You can use `pivot_wider()` to reshape this into a **wide** format with one
+column per cytokine:
+
+```{r}
+#| label: pivot-luminex-wide
+luminex_wide <- luminex |> 
+  pivot_wider(names_from = cytokine, values_from = c(conc, limits))
+
+luminex_wide
+```
+
+---
+
+## 4. `03_flow_cytometry_period.csv`
+
+```{r}
+#| label: load-flow
+flow <- read_csv(file.path(data_dir, "03_flow_cytometry_period.csv"))
+glimpse(flow)
+```
+
+**What a single row represents:** the **cell counts** from one sample, after
+flow cytometry and gating to identify different immune cell populations.
+
+| Column | Type | Meaning |
+|--------|------|---------|
+| `sample_id` | character | Which sample this comes from. Links to `00_sample_ids_period.csv`. |
+| `live_cd19_negative` | numeric | Number of live cells **after excluding B cells** (CD19-negative). This is the starting population for all downstream gating. |
+| `cd45_negative` | numeric | Cells that are **CD45-negative** (non-immune / stromal cells). |
+| `cd45_positive` | numeric | Cells that are **CD45-positive** (immune cells / leukocytes). |
+| `neutrophils` | numeric | Neutrophil count (a type of granulocyte, part of the innate immune system). |
+| `non_neutrophils` | numeric | CD45-positive cells that are **not** neutrophils. |
+| `cd3_negative` | numeric | Non-neutrophil cells that are **CD3-negative** (NK cells, monocytes, etc.). |
+| `cd3_positive` | numeric | Non-neutrophil cells that are **CD3-positive** (all T cells). |
+| `cd4_t_cells` | numeric | CD4⁺ T cells ("helper" T cells). |
+| `cd8_t_cells` | numeric | CD8⁺ T cells ("killer" / cytotoxic T cells). |
+
+The approximate gating strategy is:
+
+```
+Live + CD19- cells
+  ├── CD45- (stromal / non-immune)
+  └── CD45+ (leukocytes)
+       ├── Neutrophils
+       └── Non-neutrophils
+            ├── CD3- (NK cells, monocytes, etc.)
+            └── CD3+ (all T cells)
+                 ├── CD4+ T cells  (helper)
+                 ├── CD8+ T cells  (cytotoxic)
+                 └── Other T cells (e.g. double-negative, γδ T cells)
+```
+
+> ⚠️ **The hierarchy is a logical gating tree, not a strict arithmetic
+> one.** Some cells always fall through the gates (they express a marker
+> at an unexpected level) or belong to a population not explicitly listed
+> (e.g. double-negative CD4⁻CD8⁻ T cells, gamma-delta T cells).
+> The code below shows where the gaps are.
+
+```{r}
+#| label: check-flow-additivity
+# Check how well the gating hierarchy adds up (level by level)
+flow |>
+  mutate(
+    # Level 0: starting population vs CD45- + CD45+
+    l0_diff = live_cd19_negative - (cd45_negative + cd45_positive),
+    # Level 1: CD45+ should ≈ neutrophils + non-neutrophils
+    l1_diff = cd45_positive - (neutrophils + non_neutrophils),
+    # Level 2: non-neutrophils should ≈ CD3- + CD3+
+    l2_diff = non_neutrophils - (cd3_negative + cd3_positive),
+    # Level 3: CD3+ should be >= CD4+ + CD8+ (it includes other subsets too)
+    l3_gap = cd3_positive - (cd4_t_cells + cd8_t_cells)
+  ) |>
+  select(sample_id, l0_diff, l1_diff, l2_diff, l3_gap)
+```
+
+Key observations from the real data:
+
+- **L0** (`live_cd19_negative` vs CD45⁻ + CD45⁺): Small differences exist
+  (some events may fall outside the CD45 gate).
+- **L1** (`cd45_positive` vs neutrophils + non-neutrophils): Very tight
+  — most samples are within 10 cells of summing perfectly.
+- **L2** (`non_neutrophils` vs CD3⁻ + CD3⁺): Always positive — about 900–2000
+  cells on average fall outside the CD3 gate (possibly NK cells, dendritic
+  cells, or monocytes with ambiguous CD3 staining).
+- **L3** (`cd3_positive` vs CD4⁺ + CD8⁺): **Always positive** — CD3⁺ cells
+  include not just CD4⁺ and CD8⁺ single-positive T cells, but also
+  **double-negative** (CD4⁻CD8⁻) and **gamma-delta** T cells, and possibly
+  **double-positive** (CD4⁺CD8⁺) immature T cells.
+
+---
+
+## Relationships between the tables
+
+```
+01_participant_metadata  ────  pid  ────  00_sample_ids_period
+                                              │
+                                              │ sample_id
+                                              │
+                    ┌─────────────────────────┼─────────────────────────┐
+                    │ sample_id                                       │ sample_id
+                    ▼                                                 ▼
+          02_luminex_period                              03_flow_cytometry_period
+```
+
+- **`00_sample_ids_period`** is the **hub** — it links the other tables.
+- Each `pid` in `01_participant_metadata` can appear many times in
+  `00_sample_ids_period` (one row per sample collected).
+- Each `sample_id` can appear once in `03_flow_cytometry_period` and 8 times
+  (once per cytokine) in `02_luminex_period`.
+
+### Joining everything together
+
+```{r}
+#| label: join-all
+# Drop the duplicate "arm" from metadata (same as sample_ids)
+all_data <- sample_ids |>
+  left_join(metadata |> select(-arm), by = "pid") |>
+  left_join(luminex, by = "sample_id") |>
+  left_join(flow, by = "sample_id")
+
+glimpse(all_data)
+```

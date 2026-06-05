@@ -26,15 +26,15 @@ table_02
 
 **1. How many rows? What does one row represent?**
 
-*Your answer:*
+*Your answer:* There are 132 rows that represent participent id's within each time point
 
 **2. After `table_02 |> filter(time_point == "baseline")`, how many rows? What does each row represent now?**
 
-*Your answer:*
+*Your answer:* There will still be a reduced number of rows as only baseline patients are filtered
 
 **3. After `table_02 |> count(arm)`, how many rows? What does each row represent now?**
 
-*Your answer:*
+*Your answer:* There will be 2 rows that are divided into plecabo and treatment (66 each if divided equally)
 
 ## Part 2 — Build the pipeline
 
@@ -42,32 +42,38 @@ Each step adds one verb on top of the previous pipeline. Run after each step.
 
 ```{r}
 # step 1: pipe table_02 into head()
+head(table_02)
 ```
 
 ```{r}
 # step 2: filter to the baseline time point
+table_02 |> filter(time_point == "baseline")
 ```
 
 ```{r}
 # step 3: add select() for pid, arm, ph, nugent_score, crp_blood
+table_02 |> filter(time_point == "baseline") |> select(pid, arm, ph, nugent_score, crp_blood)
 ```
 
 ```{r}
 # step 4: add mutate() for high_ph = if_else(ph >= 4.5, "yes", "no")
+table_02 |> filter(time_point == "baseline") |> mutate(high_ph = if_else(ph >= 4, "yes", "no")) |> select(pid, arm, ph, nugent_score, crp_blood, high_ph)
 ```
 
 ```{r}
 # step 5: add arrange(desc(ph))
+table_02 |> filter(time_point == "baseline") |> mutate(high_ph = if_else(ph >= 4, "yes", "no")) |> select(pid, arm, ph, nugent_score, crp_blood, high_ph) |> arrange(desc(ph))
 ```
 
 ```{r}
 # step 6: assign the final pipeline to early_visit, then print it
 early_visit <- NULL  # replace NULL with the pipeline
-early_visit
+early_visit <- table_02 |> filter(time_point == "baseline") |> mutate(high_ph = if_else(ph >= 4, "yes", "no")) |> select(pid, arm, ph, nugent_score, crp_blood, high_ph) |> arrange(desc(ph))
 ```
 
 ```{r}
 # step 7: separately, table_02 |> count(arm)
+table_02 |> count(arm)
 ```
 
 ## Part 3 — Reach (optional)
@@ -82,4 +88,11 @@ Then run `count(arm, nugent_category)`.
 
 ```{r}
 # reach: mutate(nugent_category = case_when(...)) then count(arm, nugent_category)
+table_02 |> 
+  mutate(nugent_category = case_when(
+    nugent_score >= 0 & nugent_score <= 3 ~ "normal",
+    nugent_score >= 4 & nugent_score <= 6 ~ "intermediate",
+    nugent_score >= 7 & nugent_score <= 10 ~ "BV"
+  )) |> 
+  count(arm, nugent_category)
 ```

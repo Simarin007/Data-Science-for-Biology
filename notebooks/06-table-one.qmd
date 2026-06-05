@@ -30,24 +30,26 @@ For each non-pid column of `table_01` (`arm`, `smoker`, `age`, `education`, `sex
 
 **1. `arm`**
 
-- How will `tbl_summary(by = arm)` summarise it? *Your answer:*
-- What test will `add_p()` pick? *Your answer:*
+- How will `tbl_summary(by = arm)` summarise it? *Your answer:* `arm` is the **grouping variable** (`by = arm`), so it won't appear as its own row. Instead, the table splits every other column into two columns: **placebo** vs **treatment**.
+- What test will `add_p()` pick? *Your answer:* `add_p()` skips the grouping variable (`arm`) — it has nothing to test *on* `arm` itself. It adds tests to the **other** columns instead: smoker, age, education, and sex.
+
+> **💡 Tutor note on your original answer:** You had the right idea — the table *does* compare treatment vs placebo. But "each variable stat in terms of treatment vs placebo" describes the *effect* of the grouping, not how `arm` itself is summarised. Since `arm` is the `by` variable, it has **no row** in the table. And `add_p()` doesn't select *which variables* to test — it picks a *statistical test* (e.g., chi-square, t-test) for each column. See Q2–5 below for the actual tests.
 
 **2. `smoker`**
 
-- *Your answer (summary, test):*
+- *Your answer (summary, test):* **Summary:** counts and percentages (`n (%)`) of smokers vs non-smokers in each arm. **Test:** chi-square test of independence — tests whether smoking rate differs between treatment and placebo.
 
 **3. `age`**
 
-- *Your answer (summary, test):*
+- *Your answer (summary, test):* **Summary:** median (Q1, Q3) — the default for a continuous variable. **Test:** Wilcoxon rank-sum test (non-parametric, used by `gtsummary` by default when n < 50) — tests whether the age distributions differ between arms.
 
 **4. `education`**
 
-- *Your answer (summary, test):*
+- *Your answer (summary, test):* **Summary:** counts and percentages of each education level in each arm. **Test:** chi-square test of independence — tests whether education level is associated with arm assignment.
 
 **5. `sex`**
 
-- *Your answer (summary, test):*
+- *Your answer (summary, test):* **Summary:** counts and percentages — but **all 44 participants are female**, so both arms show `F 100%`. **Test:** `add_p()` will **error** on sex because chi-square (and any test) needs at least two levels to compare, but sex has only one value (`"F"`).
 
 ## Part 2 — Build
 
@@ -63,22 +65,54 @@ table_01 |>
 ```{r}
 # step 2: add p-values
 # (modify the previous chunk by adding `|> add_p()`)
+table_01 |>
+  select(-pid, -sex) |>
+  tbl_summary(by = arm) |>
+  add_p()
 ```
 
 ```{r}
 # step 3: override age to mean (SD) + t-test
-# statistic = list(age ~ "{mean} ({sd})")
-# test = list(age ~ "t.test")
+table_01 |>
+  select(-pid, -sex) |>
+  tbl_summary(
+    by = arm,
+    statistic = list(age ~ "{mean} ({sd})")
+  ) |>
+  add_p(test = list(age ~ "t.test"))
 ```
 
 ```{r}
 # step 4: polish
-# add `|> add_overall() |> bold_labels() |> modify_header(label ~ "**Characteristic**")`
+table_01 |>
+  select(-pid, -sex) |>
+  tbl_summary(
+    by = arm,
+    statistic = list(age ~ "{mean} ({sd})")
+  ) |>
+  add_p(test = list(age ~ "t.test")) |>
+  add_overall() |>
+  bold_labels() |>
+  modify_header(label ~ "**Characteristic**")
 ```
 
 ## Part 3 — Reach (optional)
 
 ```{r}
 # reach: same table, but by = smoker instead of by = arm
-# what question is this table now answering?
+table_01 |>
+  select(-pid, -sex) |>
+  tbl_summary(
+    by = smoker,
+    statistic = list(age ~ "{mean} ({sd})")
+  ) |>
+  add_p(test = list(age ~ "t.test")) |>
+  add_overall() |>
+  bold_labels() |>
+  modify_header(label ~ "**Characteristic**")
 ```
+
+> **What question is this table now answering?**
+> It answers: **"How do participants' characteristics (age, education, arm assignment) differ between smokers and non-smokers?"**
+>
+> Instead of asking *"Did randomization work?"* (comparing treatment vs placebo), this asks a descriptive question: *"What does the smoking profile of our sample look like?"* — are smokers older? more educated? more likely to be in one arm?

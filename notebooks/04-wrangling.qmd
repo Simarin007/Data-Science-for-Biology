@@ -27,53 +27,56 @@ table_02
 
 **1. After `table_02 |> group_by(pid) |> summarise(mean_ph = mean(ph))`:**
 
-*Your answer:*
+*Your answer:* 44 rows
 
 **2. After `table_02 |> group_by(arm, time_point) |> summarise(mean_ph = mean(ph))`:**
 
-*Your answer:*
+*Your answer:* 6 rows
 
 **3. After `per_person |> left_join(table_01, by = "pid")`, where `per_person` is the 44-row result from prediction 1:**
 
-*Your answer:*
+*Your answer:* 44 rows
 
 **4. After `arm_timepoint |> pivot_wider(names_from = time_point, values_from = mean_ph)`, where `arm_timepoint` is the 6-row result from prediction 2:**
 
-*Your answer:*
+*Your answer:* 2 rows
 
 ## Part 2 — Build the pipeline
 
 ```{r}
 # step 1: pipe table_02 into head() to see the starting shape
+head(table_02)
 ```
 
 ```{r}
 # step 2: group_by(pid) |> summarise(mean_ph = mean(ph), mean_nugent = mean(nugent_score))
 # assign it to per_person so step 3 can use it
-per_person <- NULL  # replace NULL with the pipeline
-per_person
+per_person <- table_02 |> group_by(pid) |> summarise(mean_ph = mean(ph), mean_nugent = mean(nugent_score))  # replace NULL with the pipeline
+per_person 
 ```
 
 ```{r}
 # step 3: per_person |> left_join(table_01, by = "pid")
+per_person |> left_join(table_01, by = "pid")
 ```
 
 ```{r}
 # step 4: separately, table_02 |> group_by(arm, time_point) |> summarise(mean_ph = mean(ph))
 # assign it to arm_timepoint
-arm_timepoint <- NULL  # replace NULL with the pipeline
+arm_timepoint <- table_02 |> group_by(arm, time_point) |> summarise(mean_ph = mean(ph))  # replace NULL with the pipeline
 arm_timepoint
 ```
 
 ```{r}
 # step 5: arm_timepoint |> pivot_wider(names_from = time_point, values_from = mean_ph)
+arm_timepoint |> pivot_wider(names_from = time_point, values_from = mean_ph)
 ```
 
 ```{r}
 # step 6: separately, table_02 |> pivot_longer(c(ph, nugent_score, crp_blood),
 #                                              names_to = "measurement", values_to = "value")
 # assign it to long_table — Exercise 2 will use this
-long_table <- NULL  # replace NULL with the pipeline
+long_table <- table_02 |> pivot_longer(c(ph, nugent_score, crp_blood), names_to = "measurement", values_to = "value") # replace NULL with the pipeline
 long_table
 ```
 
@@ -83,4 +86,10 @@ long_table
 # reach: smokers <- table_01 |> filter(smoker == "smoker")
 # then: per_person |> semi_join(smokers, by = "pid")
 # then: group_by(arm) |> summarise(...) for per-arm pH means among smokers only
-```
+
+smokers <- table_01 |> filter(smoker == "smoker")
+per_person |>
+  semi_join(smokers, by = "pid") |>
+  left_join(table_01 |> select(pid, arm), by = "pid") |>
+  group_by(arm) |>
+  summarise(mean_ph = mean(mean_ph))

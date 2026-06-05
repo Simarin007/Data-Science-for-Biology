@@ -23,34 +23,86 @@ library(here)
 
 ## Part 1 — Run a chunk, write a sentence, render
 
+# + is treated as a plus
+# * is mltiply
+# ** is 2 to the power of 10
+# BODMAS aplies to both final examples
+
 ```{r}
-# your code here
+3 + 5 + 10
+10 * (5+1)
+2 **10
+64 / 2 + 2
+64 / (2+2)
 ```
 
 ## Part 2 — Read the data and look at it
 
+# There are 132 rows and 6 columns
+# Columns that are interesting are pid and time_point
 ```{r}
-# your code here
+table_02 <- read_csv(here(
+  "data/instructional_dataset/02_visit_clinical_measurements_UKZN_workshop_2023.csv"))
+  table_02
+  glimpse(table_02)
 ```
 
 ## Part 3 — Pull out columns and summarise them
 
+# The mean blood crp is 1.47 excluding N/A values due to using the na.rm = TRUE function
 ```{r}
-# your code here
+table_02$nugent_score
+mean(table_02$crp_blood, na.rm = TRUE)
+crp_mean <- mean(table_02$crp_blood, na.rm = TRUE)
+crp_mean
 ```
 
 ## Part 4 — Build something with Pi
 
+# Pi successfully wrote the correct code, with column names existing within the data
 ```{r}
-# your code here
+ df <- read.csv(here("data/instructional_dataset/02_visit_clinical_measurements_UKZN_workshop_2023.csv"))
+aggregate(nugent_score ~ arm, data = df, FUN = mean)
 ```
 
 ## Capstone — make it your own
 
 ```{r}
-# your code here
+# Summary statistics for ph
+library(knitr)
+
+table_02 %>%
+  summarise(
+    min    = min(ph, na.rm = TRUE),
+    max    = max(ph, na.rm = TRUE),
+    median = median(ph, na.rm = TRUE),
+    mean   = mean(ph, na.rm = TRUE),
+    sd     = sd(ph, na.rm = TRUE)
+  ) %>%
+  kable(digits = 2, caption = "pH summary statistics")
 ```
 
+# 46 Visits contained high Nugent scores indicating bacterial vaginosis. Furthermore, these cases contain higher average pH levels, which makes sense biologically as a healthy vaginal microbiome is acidic, with pH levels rising when harmful bacteria invade.
+```{r}
+# How many visits have a nugent_score of 7 or higher?
+table_02 %>%
+  filter(nugent_score >= 7) %>%
+  nrow()
+```
+
+```{r}
+# What's the average pH for high nugent_score (>=7) vs low (<7)?
+table_02 %>%
+  mutate(nugent_group = ifelse(nugent_score >= 7, "High (≥7)", "Low (<7)")) %>%
+  group_by(nugent_group) %>%
+  summarise(
+    n    = n(),
+    mean_ph = mean(ph, na.rm = TRUE),
+    sd_ph   = sd(ph, na.rm = TRUE)
+  ) %>%
+  kable(digits = 2, col.names = c("Nugent Group", "Count", "Mean pH", "SD"),
+        caption = "Average pH by nugent_score group")
+```
 ## Before you go
 
 Pick one step today that confused you. Ask Pi to explain it, then push back:

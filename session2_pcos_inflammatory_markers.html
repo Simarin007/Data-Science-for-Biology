@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Data Science for Biology Workshop">
+
+<title>Session 2: PCOS and Inflammatory Markers in Menstrual Cycle</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="session2_pcos_inflammatory_markers_files/libs/clipboard/clipboard.min.js"></script>
+<script src="session2_pcos_inflammatory_markers_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="session2_pcos_inflammatory_markers_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="session2_pcos_inflammatory_markers_files/libs/quarto-html/popper.min.js"></script>
+<script src="session2_pcos_inflammatory_markers_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="session2_pcos_inflammatory_markers_files/libs/quarto-html/anchor.min.js"></script>
+<link href="session2_pcos_inflammatory_markers_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="session2_pcos_inflammatory_markers_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="session2_pcos_inflammatory_markers_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="session2_pcos_inflammatory_markers_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="session2_pcos_inflammatory_markers_files/libs/bootstrap/bootstrap-de9ea4695b5809f5b49b6072e50bb385.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="session2_pcos_inflammatory_markers_files/libs/tabwid-1.1.3/tabwid.css" rel="stylesheet">
+<script src="session2_pcos_inflammatory_markers_files/libs/tabwid-1.1.3/tabwid.js"></script>
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#research-question" id="toc-research-question" class="nav-link active" data-scroll-target="#research-question">Research Question</a></li>
+  <li><a href="#data-import" id="toc-data-import" class="nav-link" data-scroll-target="#data-import">Data Import</a></li>
+  <li><a href="#data-validation" id="toc-data-validation" class="nav-link" data-scroll-target="#data-validation">Data Validation</a></li>
+  <li><a href="#table-1-participant-characteristics-by-pcos-status" id="toc-table-1-participant-characteristics-by-pcos-status" class="nav-link" data-scroll-target="#table-1-participant-characteristics-by-pcos-status">Table 1: Participant Characteristics by PCOS Status</a></li>
+  <li><a href="#cytokine-comparison-figure" id="toc-cytokine-comparison-figure" class="nav-link" data-scroll-target="#cytokine-comparison-figure">Cytokine Comparison Figure</a></li>
+  <li><a href="#mixed-effects-model" id="toc-mixed-effects-model" class="nav-link" data-scroll-target="#mixed-effects-model">Mixed-Effects Model</a></li>
+  <li><a href="#model-results-summary" id="toc-model-results-summary" class="nav-link" data-scroll-target="#model-results-summary">Model Results Summary</a></li>
+  <li><a href="#regression-table" id="toc-regression-table" class="nav-link" data-scroll-target="#regression-table">Regression Table</a>
+  <ul class="collapse">
+  <li><a href="#cross-cytokine-pcos-coefficient-summary" id="toc-cross-cytokine-pcos-coefficient-summary" class="nav-link" data-scroll-target="#cross-cytokine-pcos-coefficient-summary">Cross-Cytokine PCOS Coefficient Summary</a></li>
+  </ul></li>
+  <li><a href="#results-interpretation" id="toc-results-interpretation" class="nav-link" data-scroll-target="#results-interpretation">Results Interpretation</a></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="session2_pcos_inflammatory_markers.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li><li><a href="session2_pcos_inflammatory_markers.docx"><i class="bi bi-file-word"></i>MS Word</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Session 2: PCOS and Inflammatory Markers in Menstrual Cycle</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Data Science for Biology Workshop </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="research-question" class="level2">
+<h2 class="anchored" data-anchor-id="research-question">Research Question</h2>
+<blockquote class="blockquote">
+<p><strong>Do inflammatory marker levels differ between participants with PCOS and participants without PCOS after accounting for menstrual-cycle stage?</strong></p>
+</blockquote>
+<p>In this analysis we compare inflammatory cytokine concentrations between participants diagnosed with PCOS and those with no disease, while adjusting for the time point (menstrual-cycle stage) as a covariate.</p>
+<hr>
+</section>
+<section id="data-import" class="level2">
+<h2 class="anchored" data-anchor-id="data-import">Data Import</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Read all CSV files from the dataset directory</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Participant metadata: age, PCOS status, arm, period product, sex</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>participant_meta <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/group_b_menstruation/01_participant_metadata_period.csv"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                             <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample IDs mapping: links participants to their samples across time points</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>sample_ids <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/group_b_menstruation/00_sample_ids_period.csv"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Luminex cytokine concentrations</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>luminex <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/group_b_menstruation/02_luminex_period.csv"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview each dataset</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(participant_meta)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 27
+Columns: 6
+$ pid            &lt;chr&gt; "pid_01", "pid_02", "pid_03", "pid_04", "pid_05", "pid_…
+$ arm            &lt;chr&gt; "birth_control", "birth_control", "no_birth_control", "…
+$ age            &lt;dbl&gt; 34, 30, 29, 31, 30, 41, 30, 30, 30, 27, 35, 30, 29, 30,…
+$ pcos_status    &lt;chr&gt; "no disease", "pcos", "pcos", "pcos", "pcos", "pcos", "…
+$ period_product &lt;chr&gt; "tampon", "menstrual_cup", "tampon", "pad", "tampon", "…
+$ sex            &lt;chr&gt; "female", "female", "female", "female", "female", "fema…</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(sample_ids)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 108
+Columns: 4
+$ pid        &lt;chr&gt; "pid_12", "pid_04", "pid_26", "pid_08", "pid_16", "pid_27",…
+$ time_point &lt;chr&gt; "week_post", "week_post", "onset", "end_bleeding", "week_po…
+$ arm        &lt;chr&gt; "birth_control", "birth_control", "birth_control", "no_birt…
+$ sample_id  &lt;chr&gt; "SAMP001", "SAMP002", "SAMP003", "SAMP004", "SAMP005", "SAM…</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(luminex)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 864
+Columns: 4
+$ sample_id &lt;chr&gt; "SAMP048", "SAMP048", "SAMP048", "SAMP048", "SAMP048", "SAMP…
+$ cytokine  &lt;chr&gt; "IL-1a", "IL-1b", "IL-6", "TNFa", "MIG", "IFNg", "IP-10", "M…
+$ conc      &lt;dbl&gt; 0.75898551, 1.98212496, 0.09155273, 0.21362305, 180.45283113…
+$ limits    &lt;chr&gt; "not_censored", "not_censored", "below_detection_limit", "be…</code></pre>
+</div>
+</div>
+</section>
+<section id="data-validation" class="level2">
+<h2 class="anchored" data-anchor-id="data-validation">Data Validation</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate key identifiers and merge datasets</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Participant metadata checks ---</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Number of participants:"</span>, <span class="fu">n_distinct</span>(participant_meta<span class="sc">$</span>pid), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Number of participants: 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"PCOS status levels:"</span>, <span class="fu">unique</span>(participant_meta<span class="sc">$</span>pcos_status), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PCOS status levels: no disease pcos </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Sex levels:"</span>, <span class="fu">unique</span>(participant_meta<span class="sc">$</span>sex), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sex levels: female </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Arms:"</span>, <span class="fu">unique</span>(participant_meta<span class="sc">$</span>arm), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Arms: birth_control no_birth_control </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Period products:"</span>, <span class="fu">unique</span>(participant_meta<span class="sc">$</span>period_product), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Period products: tampon menstrual_cup pad </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Sample ID checks ---</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Number of samples:"</span>, <span class="fu">n_distinct</span>(sample_ids<span class="sc">$</span>sample_id), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Number of samples: 108 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Time points:"</span>, <span class="fu">unique</span>(sample_ids<span class="sc">$</span>time_point), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time points: week_post onset end_bleeding week_prior </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Unique PIDs in sample_ids:"</span>, <span class="fu">n_distinct</span>(sample_ids<span class="sc">$</span>pid), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unique PIDs in sample_ids: 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that all PIDs in sample_ids exist in participant_meta</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>pid_in_both <span class="ot">&lt;-</span> <span class="fu">all</span>(sample_ids<span class="sc">$</span>pid <span class="sc">%in%</span> participant_meta<span class="sc">$</span>pid)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">All sample PIDs found in participant metadata:"</span>, pid_in_both, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+All sample PIDs found in participant metadata: TRUE </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Luminex checks ---</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Unique cytokines:"</span>, <span class="fu">unique</span>(luminex<span class="sc">$</span>cytokine), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Unique cytokines: IL-1a IL-1b IL-6 TNFa MIG IFNg IP-10 MIP-3a </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Number of cytokines:"</span>, <span class="fu">n_distinct</span>(luminex<span class="sc">$</span>cytokine), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Number of cytokines: 8 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Unique sample IDs in luminex:"</span>, <span class="fu">n_distinct</span>(luminex<span class="sc">$</span>sample_id), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Unique sample IDs in luminex: 108 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that all luminex sample IDs exist in sample_ids</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>sample_in_both <span class="ot">&lt;-</span> <span class="fu">all</span>(luminex<span class="sc">$</span>sample_id <span class="sc">%in%</span> sample_ids<span class="sc">$</span>sample_id)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"All luminex sample IDs found in sample_ids:"</span>, sample_in_both, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>All luminex sample IDs found in sample_ids: TRUE </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Merge into analysis dataset ---</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Join sample_ids with participant_meta</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Both datasets have 'arm', so we keep it from participant_meta</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>analysis_data <span class="ot">&lt;-</span> sample_ids <span class="sc">%&gt;%</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(participant_meta, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"pid"</span>, <span class="st">"arm"</span>))</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Join with luminex</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>analysis_data <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(luminex, <span class="at">by =</span> <span class="st">"sample_id"</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: Create log-transformed concentration</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="co"># log1p = log(1 + x) handles zeros gracefully</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>analysis_data <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_conc =</span> <span class="fu">log1p</span>(conc))</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Final dataset: select the columns we need</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>analysis_data <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(pid, pcos_status, age, arm, period_product, time_point,</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>         cytokine, conc, log_conc)</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove any rows with missing cytokines (no luminex measurement)</span></span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>analysis_data <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cytokine))</span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Final analysis dataset dimensions:"</span>, <span class="fu">dim</span>(analysis_data), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Final analysis dataset dimensions: 864 9 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Number of participants:"</span>, <span class="fu">n_distinct</span>(analysis_data<span class="sc">$</span>pid), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Number of participants: 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Number of observations:"</span>, <span class="fu">nrow</span>(analysis_data), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Number of observations: 864 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(analysis_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 864
+Columns: 9
+$ pid            &lt;chr&gt; "pid_12", "pid_12", "pid_12", "pid_12", "pid_12", "pid_…
+$ pcos_status    &lt;chr&gt; "no disease", "no disease", "no disease", "no disease",…
+$ age            &lt;dbl&gt; 30, 30, 30, 30, 30, 30, 30, 30, 31, 31, 31, 31, 31, 31,…
+$ arm            &lt;chr&gt; "birth_control", "birth_control", "birth_control", "bir…
+$ period_product &lt;chr&gt; "tampon", "tampon", "tampon", "tampon", "tampon", "tamp…
+$ time_point     &lt;chr&gt; "week_post", "week_post", "week_post", "week_post", "we…
+$ cytokine       &lt;chr&gt; "IL-1a", "IL-1b", "IL-6", "TNFa", "MIG", "IFNg", "IP-10…
+$ conc           &lt;dbl&gt; 9.42421205, 0.88900255, 0.09155273, 0.21362305, 89.6939…
+$ log_conc       &lt;dbl&gt; 2.34413118, 0.63604894, 0.08760121, 0.19361014, 4.50749…</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="table-1-participant-characteristics-by-pcos-status" class="level2">
+<h2 class="anchored" data-anchor-id="table-1-participant-characteristics-by-pcos-status">Table 1: Participant Characteristics by PCOS Status</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create Table 1 using gtsummary, grouped by pcos_status</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Use distinct participant-level data (one row per participant)</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>participant_tbl <span class="ot">&lt;-</span> participant_meta <span class="sc">%&gt;%</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(pid, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove 'sex' if it has only one level — it does (all "female")</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>sex_levels <span class="ot">&lt;-</span> <span class="fu">unique</span>(participant_tbl<span class="sc">$</span>sex)</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Sex levels:"</span>, sex_levels, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sex levels: female </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build Table 1</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>tbl1 <span class="ot">&lt;-</span> participant_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(pcos_status, age, arm, period_product) <span class="sc">%&gt;%</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_summary</span>(</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> pcos_status,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">label =</span> <span class="fu">list</span>(</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>      age <span class="sc">~</span> <span class="st">"Age (years)"</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>      arm <span class="sc">~</span> <span class="st">"Birth control use"</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>      period_product <span class="sc">~</span> <span class="st">"Period product"</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">statistic =</span> <span class="fu">list</span>(</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">all_continuous</span>() <span class="sc">~</span> <span class="st">"{mean} ({sd})"</span>,</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">all_categorical</span>() <span class="sc">~</span> <span class="st">"{n} ({p}%)"</span></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="fu">list</span>(age <span class="sc">~</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_p</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_overall</span>()</span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Display in document</span></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a>tbl1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="qeayjdrzqo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#qeayjdrzqo table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#qeayjdrzqo thead, #qeayjdrzqo tbody, #qeayjdrzqo tfoot, #qeayjdrzqo tr, #qeayjdrzqo td, #qeayjdrzqo th {
+  border-style: none;
+}
+
+#qeayjdrzqo p {
+  margin: 0;
+  padding: 0;
+}
+
+#qeayjdrzqo .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#qeayjdrzqo .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#qeayjdrzqo .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#qeayjdrzqo .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#qeayjdrzqo .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#qeayjdrzqo .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#qeayjdrzqo .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#qeayjdrzqo .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#qeayjdrzqo .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#qeayjdrzqo .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#qeayjdrzqo .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#qeayjdrzqo .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#qeayjdrzqo .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#qeayjdrzqo .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#qeayjdrzqo .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qeayjdrzqo .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#qeayjdrzqo .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#qeayjdrzqo .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#qeayjdrzqo .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qeayjdrzqo .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#qeayjdrzqo .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qeayjdrzqo .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#qeayjdrzqo .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qeayjdrzqo .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#qeayjdrzqo .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qeayjdrzqo .gt_left {
+  text-align: left;
+}
+
+#qeayjdrzqo .gt_center {
+  text-align: center;
+}
+
+#qeayjdrzqo .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#qeayjdrzqo .gt_font_normal {
+  font-weight: normal;
+}
+
+#qeayjdrzqo .gt_font_bold {
+  font-weight: bold;
+}
+
+#qeayjdrzqo .gt_font_italic {
+  font-style: italic;
+}
+
+#qeayjdrzqo .gt_super {
+  font-size: 65%;
+}
+
+#qeayjdrzqo .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#qeayjdrzqo .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#qeayjdrzqo .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#qeayjdrzqo .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#qeayjdrzqo .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#qeayjdrzqo .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#qeayjdrzqo .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#qeayjdrzqo .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#qeayjdrzqo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="stat_0" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Overall</strong><br>
+N = 27<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_1" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>no disease</strong><br>
+N = 13<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="stat_2" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>pcos</strong><br>
+N = 14<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+<th id="p.value" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>p-value</strong><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>2</sup></span></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">Age (years)</td>
+<td class="gt_row gt_center" headers="stat_0">31.4 (2.9)</td>
+<td class="gt_row gt_center" headers="stat_1">30.5 (2.5)</td>
+<td class="gt_row gt_center" headers="stat_2">32.1 (3.1)</td>
+<td class="gt_row gt_center" headers="p.value">0.2</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">Birth control use</td>
+<td class="gt_row gt_center" headers="stat_0"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_1"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_2"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value">0.2</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;birth_control</td>
+<td class="gt_row gt_center" headers="stat_0">15 (56%)</td>
+<td class="gt_row gt_center" headers="stat_1">9 (69%)</td>
+<td class="gt_row gt_center" headers="stat_2">6 (43%)</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;no_birth_control</td>
+<td class="gt_row gt_center" headers="stat_0">12 (44%)</td>
+<td class="gt_row gt_center" headers="stat_1">4 (31%)</td>
+<td class="gt_row gt_center" headers="stat_2">8 (57%)</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">Period product</td>
+<td class="gt_row gt_center" headers="stat_0"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_1"><br>
+</td>
+<td class="gt_row gt_center" headers="stat_2"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value">0.2</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;menstrual_cup</td>
+<td class="gt_row gt_center" headers="stat_0">4 (15%)</td>
+<td class="gt_row gt_center" headers="stat_1">2 (15%)</td>
+<td class="gt_row gt_center" headers="stat_2">2 (14%)</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;pad</td>
+<td class="gt_row gt_center" headers="stat_0">4 (15%)</td>
+<td class="gt_row gt_center" headers="stat_1">0 (0%)</td>
+<td class="gt_row gt_center" headers="stat_2">4 (29%)</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;tampon</td>
+<td class="gt_row gt_center" headers="stat_0">19 (70%)</td>
+<td class="gt_row gt_center" headers="stat_1">11 (85%)</td>
+<td class="gt_row gt_center" headers="stat_2">8 (57%)</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_footnotes odd">
+<td colspan="5" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> Mean (SD); n (%)</td>
+</tr>
+<tr class="gt_footnotes even">
+<td colspan="5" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>2</sup></span> Wilcoxon rank sum test; Pearson’s Chi-squared test; Fisher’s exact test</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Export to HTML</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>tbl1 <span class="sc">%&gt;%</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_flex_table</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  flextable<span class="sc">::</span><span class="fu">save_as_html</span>(<span class="at">path =</span> <span class="st">"Table_1_PCOS_vs_NoDisease.html"</span>)</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Export to Word</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>tbl1 <span class="sc">%&gt;%</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_flex_table</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>  flextable<span class="sc">::</span><span class="fu">save_as_docx</span>(<span class="at">path =</span> <span class="st">"Table_1_PCOS_vs_NoDisease.docx"</span>)</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Table 1 saved to Table_1_PCOS_vs_NoDisease.html and .docx</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Table 1 saved to Table_1_PCOS_vs_NoDisease.html and .docx</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="cytokine-comparison-figure" class="level2">
+<h2 class="anchored" data-anchor-id="cytokine-comparison-figure">Cytokine Comparison Figure</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Boxplots of log-transformed cytokine concentrations by PCOS status</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Detect cytokines dynamically from the data</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>cytokines <span class="ot">&lt;-</span> <span class="fu">unique</span>(analysis_data<span class="sc">$</span>cytokine)</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Cytokines detected:"</span>, <span class="fu">paste</span>(cytokines, <span class="at">collapse =</span> <span class="st">", "</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Cytokines detected: IL-1a, IL-1b, IL-6, TNFa, MIG, IFNg, IP-10, MIP-3a </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the boxplot</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggboxplot</span>(<span class="at">x =</span> <span class="st">"pcos_status"</span>, <span class="at">y =</span> <span class="st">"log_conc"</span>,</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">color =</span> <span class="st">"pcos_status"</span>,</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">palette =</span> <span class="fu">c</span>(<span class="st">"#E69F00"</span>, <span class="st">"#56B4E9"</span>),</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">add =</span> <span class="st">"jitter"</span>,</span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">add.params =</span> <span class="fu">list</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>, <span class="at">size =</span> <span class="fl">1.2</span>)) <span class="sc">+</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_compare_means</span>(<span class="at">method =</span> <span class="st">"wilcox.test"</span>,</span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>                     <span class="at">label =</span> <span class="st">"p.signif"</span>,</span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>                     <span class="at">hide.ns =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>                     <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> cytokine, <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">ncol =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Inflammatory marker levels in PCOS and non-PCOS participants"</span>,</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"PCOS Status"</span>,</span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"log(1 + concentration)"</span>) <span class="sc">+</span></span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">14</span>),</span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">11</span>),</span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"bottom"</span></span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="session2_pcos_inflammatory_markers_files/figure-html/cytokine-figure-1.png" class="img-fluid figure-img" width="1152"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as PNG</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"Figure_1_Cytokine_Comparison.png"</span>, <span class="at">plot =</span> p,</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="dv">12</span>, <span class="at">height =</span> <span class="dv">10</span>, <span class="at">dpi =</span> <span class="dv">300</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as PDF</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"Figure_1_Cytokine_Comparison.pdf"</span>, <span class="at">plot =</span> p,</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">width =</span> <span class="dv">12</span>, <span class="at">height =</span> <span class="dv">10</span>)</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Figure saved to Figure_1_Cytokine_Comparison.png and .pdf</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Figure saved to Figure_1_Cytokine_Comparison.png and .pdf</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="mixed-effects-model" class="level2">
+<h2 class="anchored" data-anchor-id="mixed-effects-model">Mixed-Effects Model</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit a linear mixed-effects model for each cytokine</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Formula: log_conc ~ pcos_status + time_point + (1 | pid)</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   - pcos_status: fixed effect of interest (PCOS vs no disease)</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   - time_point: adjustment for menstrual-cycle stage</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   - (1 | pid): random intercept per participant (accounts for repeated measures)</span></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Get unique cytokines</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>cytokines <span class="ot">&lt;-</span> <span class="fu">unique</span>(analysis_data<span class="sc">$</span>cytokine)</span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a results dataframe</span></span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>model_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (cyt <span class="cf">in</span> cytokines) {</span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Subset data for this cytokine</span></span>
+<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a>  sub_data <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(cytokine <span class="sc">==</span> cyt) <span class="sc">%&gt;%</span></span>
+<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Ensure pcos_status is a factor with "no disease" as reference</span></span>
+<span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">pcos_status =</span> <span class="fu">factor</span>(pcos_status, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"no disease"</span>, <span class="st">"pcos"</span>)),</span>
+<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Ensure time_point is a factor for the model</span></span>
+<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">time_point =</span> <span class="fu">factor</span>(time_point, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"week_prior"</span>, <span class="st">"onset"</span>,</span>
+<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>                                                  <span class="st">"end_bleeding"</span>, <span class="st">"week_post"</span>))</span>
+<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit the mixed-effects model</span></span>
+<span id="cb51-28"><a href="#cb51-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Using lmerTest which provides p-values via Satterthwaite approximation</span></span>
+<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">lmer</span>(log_conc <span class="sc">~</span> pcos_status <span class="sc">+</span> time_point <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> pid),</span>
+<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> sub_data)</span>
+<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract the coefficient for pcos_status (PCOS vs no disease)</span></span>
+<span id="cb51-33"><a href="#cb51-33" aria-hidden="true" tabindex="-1"></a>  coef_summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit)<span class="sc">$</span>coefficients</span>
+<span id="cb51-34"><a href="#cb51-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-35"><a href="#cb51-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Find the row for pcos_status (it will be "pcos_statuspcos")</span></span>
+<span id="cb51-36"><a href="#cb51-36" aria-hidden="true" tabindex="-1"></a>  pcos_row <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"pcos_status"</span>, <span class="fu">rownames</span>(coef_summary))</span>
+<span id="cb51-37"><a href="#cb51-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-38"><a href="#cb51-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get confidence interval</span></span>
+<span id="cb51-39"><a href="#cb51-39" aria-hidden="true" tabindex="-1"></a>  ci <span class="ot">&lt;-</span> <span class="fu">confint</span>(fit, <span class="at">parm =</span> <span class="st">"pcos_statuspcos"</span>, <span class="at">method =</span> <span class="st">"Wald"</span>)</span>
+<span id="cb51-40"><a href="#cb51-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-41"><a href="#cb51-41" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Store results</span></span>
+<span id="cb51-42"><a href="#cb51-42" aria-hidden="true" tabindex="-1"></a>  row_result <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb51-43"><a href="#cb51-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">cytokine =</span> cyt,</span>
+<span id="cb51-44"><a href="#cb51-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> coef_summary[pcos_row, <span class="st">"Estimate"</span>],</span>
+<span id="cb51-45"><a href="#cb51-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error =</span> coef_summary[pcos_row, <span class="st">"Std. Error"</span>],</span>
+<span id="cb51-46"><a href="#cb51-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">ci_lower =</span> ci[<span class="dv">1</span>],</span>
+<span id="cb51-47"><a href="#cb51-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">ci_upper =</span> ci[<span class="dv">2</span>],</span>
+<span id="cb51-48"><a href="#cb51-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> coef_summary[pcos_row, <span class="st">"Pr(&gt;|t|)"</span>],</span>
+<span id="cb51-49"><a href="#cb51-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_obs =</span> <span class="fu">nrow</span>(sub_data),</span>
+<span id="cb51-50"><a href="#cb51-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_participants =</span> <span class="fu">n_distinct</span>(sub_data<span class="sc">$</span>pid),</span>
+<span id="cb51-51"><a href="#cb51-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb51-52"><a href="#cb51-52" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb51-53"><a href="#cb51-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-54"><a href="#cb51-54" aria-hidden="true" tabindex="-1"></a>  model_results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(model_results, row_result)</span>
+<span id="cb51-55"><a href="#cb51-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb51-56"><a href="#cb51-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-57"><a href="#cb51-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply Benjamini-Hochberg correction across all cytokines</span></span>
+<span id="cb51-58"><a href="#cb51-58" aria-hidden="true" tabindex="-1"></a>model_results<span class="sc">$</span>p_adjusted <span class="ot">&lt;-</span> <span class="fu">p.adjust</span>(model_results<span class="sc">$</span>p_value, <span class="at">method =</span> <span class="st">"BH"</span>)</span>
+<span id="cb51-59"><a href="#cb51-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-60"><a href="#cb51-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort by adjusted p-value</span></span>
+<span id="cb51-61"><a href="#cb51-61" aria-hidden="true" tabindex="-1"></a>model_results <span class="ot">&lt;-</span> model_results <span class="sc">%&gt;%</span></span>
+<span id="cb51-62"><a href="#cb51-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(p_adjusted)</span>
+<span id="cb51-63"><a href="#cb51-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-64"><a href="#cb51-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Display results</span></span>
+<span id="cb51-65"><a href="#cb51-65" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(model_results, <span class="at">digits =</span> <span class="dv">4</span>,</span>
+<span id="cb51-66"><a href="#cb51-66" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"Mixed-effects model results: PCOS effect on log cytokine concentration"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Mixed-effects model results: PCOS effect on log cytokine concentration</caption>
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 17%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">cytokine</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">std_error</th>
+<th style="text-align: right;">ci_lower</th>
+<th style="text-align: right;">ci_upper</th>
+<th style="text-align: right;">p_value</th>
+<th style="text-align: right;">n_obs</th>
+<th style="text-align: right;">n_participants</th>
+<th style="text-align: right;">p_adjusted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">TNFa</td>
+<td style="text-align: right;">0.3484</td>
+<td style="text-align: right;">0.1738</td>
+<td style="text-align: right;">0.0079</td>
+<td style="text-align: right;">0.6890</td>
+<td style="text-align: right;">0.0559</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.3321</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">IFNg</td>
+<td style="text-align: right;">0.2266</td>
+<td style="text-align: right;">0.1255</td>
+<td style="text-align: right;">-0.0194</td>
+<td style="text-align: right;">0.4725</td>
+<td style="text-align: right;">0.0830</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.3321</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IL-1b</td>
+<td style="text-align: right;">0.3824</td>
+<td style="text-align: right;">0.2609</td>
+<td style="text-align: right;">-0.1291</td>
+<td style="text-align: right;">0.8938</td>
+<td style="text-align: right;">0.1459</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.3890</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">IL-1a</td>
+<td style="text-align: right;">0.0701</td>
+<td style="text-align: right;">0.2821</td>
+<td style="text-align: right;">-0.4828</td>
+<td style="text-align: right;">0.6230</td>
+<td style="text-align: right;">0.8058</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.8058</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IL-6</td>
+<td style="text-align: right;">-0.0691</td>
+<td style="text-align: right;">0.2099</td>
+<td style="text-align: right;">-0.4804</td>
+<td style="text-align: right;">0.3423</td>
+<td style="text-align: right;">0.7448</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.8058</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MIG</td>
+<td style="text-align: right;">0.1900</td>
+<td style="text-align: right;">0.2966</td>
+<td style="text-align: right;">-0.3913</td>
+<td style="text-align: right;">0.7713</td>
+<td style="text-align: right;">0.5276</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.8058</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IP-10</td>
+<td style="text-align: right;">-0.2034</td>
+<td style="text-align: right;">0.2468</td>
+<td style="text-align: right;">-0.6871</td>
+<td style="text-align: right;">0.2803</td>
+<td style="text-align: right;">0.4118</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.8058</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MIP-3a</td>
+<td style="text-align: right;">-0.0780</td>
+<td style="text-align: right;">0.1617</td>
+<td style="text-align: right;">-0.3949</td>
+<td style="text-align: right;">0.2390</td>
+<td style="text-align: right;">0.6308</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.8058</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write to CSV</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(model_results, <span class="st">"Model_Results_PCOS_Cytokines.csv"</span>)</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Model results saved to Model_Results_PCOS_Cytokines.csv</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Model results saved to Model_Results_PCOS_Cytokines.csv</code></pre>
+</div>
+</div>
+</section>
+<section id="model-results-summary" class="level2">
+<h2 class="anchored" data-anchor-id="model-results-summary">Model Results Summary</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Highlight which cytokines are significant after BH correction</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"=== Cytokines with significant PCOS effect (BH-adjusted p &lt; 0.05) ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>=== Cytokines with significant PCOS effect (BH-adjusted p &lt; 0.05) ===</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>significant <span class="ot">&lt;-</span> model_results <span class="sc">%&gt;%</span> <span class="fu">filter</span>(p_adjusted <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(significant) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(significant <span class="sc">%&gt;%</span> <span class="fu">select</span>(cytokine, estimate, p_value, p_adjusted))</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"No cytokines reached statistical significance after BH correction.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>No cytokines reached statistical significance after BH correction.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">=== All cytokines ranked by adjusted p-value ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== All cytokines ranked by adjusted p-value ===</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(model_results <span class="sc">%&gt;%</span> <span class="fu">select</span>(cytokine, estimate, ci_lower, ci_upper, p_value, p_adjusted))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  cytokine    estimate     ci_lower  ci_upper    p_value p_adjusted
+1     TNFa  0.34844629  0.007862887 0.6890297 0.05588076  0.3320744
+2     IFNg  0.22658932 -0.019355272 0.4725339 0.08301859  0.3320744
+3    IL-1b  0.38236003 -0.129061325 0.8937814 0.14587112  0.3889897
+4    IL-1a  0.07009258 -0.482780169 0.6229653 0.80579133  0.8057913
+5     IL-6 -0.06907883 -0.480417331 0.3422597 0.74478406  0.8057913
+6      MIG  0.18998804 -0.391285224 0.7712613 0.52760464  0.8057913
+7    IP-10 -0.20339690 -0.687108875 0.2803151 0.41175944  0.8057913
+8   MIP-3a -0.07795639 -0.394900036 0.2389873 0.63077300  0.8057913</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="regression-table" class="level2">
+<h2 class="anchored" data-anchor-id="regression-table">Regression Table</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a regression table using tbl_regression() for the first cytokine</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="co"># as a representative model, then build a combined table showing PCOS</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="co"># coefficients across all cytokines</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit a model on the complete dataset (all cytokines) to show as a single</span></span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a><span class="co"># regression table using the first cytokine as a detailed example</span></span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a>first_cyt <span class="ot">&lt;-</span> cytokines[<span class="dv">1</span>]</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a>sub_data_first <span class="ot">&lt;-</span> analysis_data <span class="sc">%&gt;%</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cytokine <span class="sc">==</span> first_cyt) <span class="sc">%&gt;%</span></span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">pcos_status =</span> <span class="fu">factor</span>(pcos_status, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"no disease"</span>, <span class="st">"pcos"</span>)),</span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_point =</span> <span class="fu">factor</span>(time_point, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"week_prior"</span>, <span class="st">"onset"</span>,</span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>                                                <span class="st">"end_bleeding"</span>, <span class="st">"week_post"</span>))</span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a>fit_first <span class="ot">&lt;-</span> <span class="fu">lmer</span>(log_conc <span class="sc">~</span> pcos_status <span class="sc">+</span> time_point <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> pid),</span>
+<span id="cb62-19"><a href="#cb62-19" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data =</span> sub_data_first)</span>
+<span id="cb62-20"><a href="#cb62-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-21"><a href="#cb62-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Create regression table with tbl_regression</span></span>
+<span id="cb62-22"><a href="#cb62-22" aria-hidden="true" tabindex="-1"></a>reg_table <span class="ot">&lt;-</span> fit_first <span class="sc">%&gt;%</span></span>
+<span id="cb62-23"><a href="#cb62-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_regression</span>(</span>
+<span id="cb62-24"><a href="#cb62-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">label =</span> <span class="fu">list</span>(</span>
+<span id="cb62-25"><a href="#cb62-25" aria-hidden="true" tabindex="-1"></a>      pcos_status <span class="sc">~</span> <span class="st">"PCOS status"</span>,</span>
+<span id="cb62-26"><a href="#cb62-26" aria-hidden="true" tabindex="-1"></a>      time_point <span class="sc">~</span> <span class="st">"Time point"</span></span>
+<span id="cb62-27"><a href="#cb62-27" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb62-28"><a href="#cb62-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate_fun =</span> <span class="sc">~</span> <span class="fu">style_number</span>(.x, <span class="at">digits =</span> <span class="dv">3</span>),</span>
+<span id="cb62-29"><a href="#cb62-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">pvalue_fun =</span> <span class="sc">~</span> <span class="fu">style_pvalue</span>(.x, <span class="at">digits =</span> <span class="dv">3</span>)</span>
+<span id="cb62-30"><a href="#cb62-30" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb62-31"><a href="#cb62-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_global_p</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb62-32"><a href="#cb62-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bold_p</span>()</span>
+<span id="cb62-33"><a href="#cb62-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-34"><a href="#cb62-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Display</span></span>
+<span id="cb62-35"><a href="#cb62-35" aria-hidden="true" tabindex="-1"></a>reg_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="pqvqrbfvff" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#pqvqrbfvff table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#pqvqrbfvff thead, #pqvqrbfvff tbody, #pqvqrbfvff tfoot, #pqvqrbfvff tr, #pqvqrbfvff td, #pqvqrbfvff th {
+  border-style: none;
+}
+
+#pqvqrbfvff p {
+  margin: 0;
+  padding: 0;
+}
+
+#pqvqrbfvff .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#pqvqrbfvff .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#pqvqrbfvff .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#pqvqrbfvff .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#pqvqrbfvff .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#pqvqrbfvff .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#pqvqrbfvff .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#pqvqrbfvff .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#pqvqrbfvff .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#pqvqrbfvff .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#pqvqrbfvff .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#pqvqrbfvff .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#pqvqrbfvff .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#pqvqrbfvff .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#pqvqrbfvff .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pqvqrbfvff .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#pqvqrbfvff .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#pqvqrbfvff .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#pqvqrbfvff .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pqvqrbfvff .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#pqvqrbfvff .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pqvqrbfvff .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#pqvqrbfvff .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pqvqrbfvff .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#pqvqrbfvff .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#pqvqrbfvff .gt_left {
+  text-align: left;
+}
+
+#pqvqrbfvff .gt_center {
+  text-align: center;
+}
+
+#pqvqrbfvff .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#pqvqrbfvff .gt_font_normal {
+  font-weight: normal;
+}
+
+#pqvqrbfvff .gt_font_bold {
+  font-weight: bold;
+}
+
+#pqvqrbfvff .gt_font_italic {
+  font-style: italic;
+}
+
+#pqvqrbfvff .gt_super {
+  font-size: 65%;
+}
+
+#pqvqrbfvff .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#pqvqrbfvff .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#pqvqrbfvff .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#pqvqrbfvff .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#pqvqrbfvff .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#pqvqrbfvff .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#pqvqrbfvff .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#pqvqrbfvff .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#pqvqrbfvff div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="estimate" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Beta</strong></th>
+<th id="conf.low" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>95% CI</strong></th>
+<th id="p.value" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>p-value</strong></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">PCOS status</td>
+<td class="gt_row gt_center" headers="estimate"><br>
+</td>
+<td class="gt_row gt_center" headers="conf.low"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value">0.804</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;no disease</td>
+<td class="gt_row gt_center" headers="estimate">—</td>
+<td class="gt_row gt_center" headers="conf.low">—</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;pcos</td>
+<td class="gt_row gt_center" headers="estimate">0.070</td>
+<td class="gt_row gt_center" headers="conf.low">-0.511, 0.651</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">Time point</td>
+<td class="gt_row gt_center" headers="estimate"><br>
+</td>
+<td class="gt_row gt_center" headers="conf.low"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value" style="font-weight: bold">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;week_prior</td>
+<td class="gt_row gt_center" headers="estimate">—</td>
+<td class="gt_row gt_center" headers="conf.low">—</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;onset</td>
+<td class="gt_row gt_center" headers="estimate">2.158</td>
+<td class="gt_row gt_center" headers="conf.low">1.549, 2.768</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;end_bleeding</td>
+<td class="gt_row gt_center" headers="estimate">1.907</td>
+<td class="gt_row gt_center" headers="conf.low">1.298, 2.516</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;week_post</td>
+<td class="gt_row gt_center" headers="estimate">0.249</td>
+<td class="gt_row gt_center" headers="conf.low">-0.360, 0.859</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="4" class="gt_sourcenote">Abbreviation: CI = Confidence Interval</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Export as Word document</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>reg_table <span class="sc">%&gt;%</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_flex_table</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_as_docx</span>(<span class="at">path =</span> <span class="st">"Model_Table_PCOS.docx"</span>)</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Regression table saved to Model_Table_PCOS.docx</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Regression table saved to Model_Table_PCOS.docx</code></pre>
+</div>
+</div>
+<section id="cross-cytokine-pcos-coefficient-summary" class="level3">
+<h3 class="anchored" data-anchor-id="cross-cytokine-pcos-coefficient-summary">Cross-Cytokine PCOS Coefficient Summary</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Build a combined table showing the PCOS coefficient for each cytokine</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a flextable from model results for reporting</span></span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>cross_table <span class="ot">&lt;-</span> model_results <span class="sc">%&gt;%</span></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(estimate, std_error, ci_lower, ci_upper), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>)),</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(p_value, p_adjusted), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">4</span>)),</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">significant =</span> <span class="fu">ifelse</span>(p_adjusted <span class="sc">&lt;</span> <span class="fl">0.05</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">ci =</span> <span class="fu">paste0</span>(<span class="st">"("</span>, ci_lower, <span class="st">", "</span>, ci_upper, <span class="st">")"</span>)</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cytokine, estimate, std_error, ci, p_value, p_adjusted, significant) <span class="sc">%&gt;%</span></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flextable</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_header_labels</span>(</span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">cytokine =</span> <span class="st">"Cytokine"</span>,</span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="st">"Estimate"</span>,</span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error =</span> <span class="st">"SE"</span>,</span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">ci =</span> <span class="st">"95% CI"</span>,</span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> <span class="st">"p-value"</span>,</span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_adjusted =</span> <span class="st">"BH-adjusted p"</span>,</span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">significant =</span> <span class="st">"Significant"</span></span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb65-24"><a href="#cb65-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_booktabs</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb65-25"><a href="#cb65-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autofit</span>()</span>
+<span id="cb65-26"><a href="#cb65-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-27"><a href="#cb65-27" aria-hidden="true" tabindex="-1"></a>cross_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="tabwid"><style>.cl-4c96c8ae{}.cl-4c8ec7ee{font-family:'DejaVu Sans';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-4c91ef32{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-4c91ef3c{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-4c921714{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92171e{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921728{width:0.667in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921729{width:1.287in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921732{width:0.786in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92173c{width:1.253in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92173d{width:0.99in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921746{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921747{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921750{width:0.667in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921751{width:1.287in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92175a{width:0.786in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92175b{width:1.253in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921764{width:0.99in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921765{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921766{width:0.879in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92176e{width:0.667in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c92176f{width:1.287in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921778{width:0.786in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921782{width:1.253in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-4c921783{width:0.99in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-4c96c8ae"><thead><tr style="overflow-wrap:break-word;"><th class="cl-4c921714"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">Cytokine</span></p></th><th class="cl-4c92171e"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">Estimate</span></p></th><th class="cl-4c921728"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">SE</span></p></th><th class="cl-4c921729"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">95% CI</span></p></th><th class="cl-4c921732"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">p-value</span></p></th><th class="cl-4c92173c"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">BH-adjusted p</span></p></th><th class="cl-4c92173d"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">Significant</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">TNFa</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.348</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.174</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(0.008, 0.689)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.0559</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.3321</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">IFNg</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.227</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.125</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.019, 0.473)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.0830</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.3321</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">IL-1b</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.382</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.261</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.129, 0.894)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.1459</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.3890</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">IL-1a</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.070</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.282</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.483, 0.623)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">IL-6</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">-0.069</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.210</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.48, 0.342)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.7448</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">MIG</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.190</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.297</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.391, 0.771)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.5276</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921746"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">IP-10</span></p></td><td class="cl-4c921747"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">-0.203</span></p></td><td class="cl-4c921750"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.247</span></p></td><td class="cl-4c921751"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.687, 0.28)</span></p></td><td class="cl-4c92175a"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.4118</span></p></td><td class="cl-4c92175b"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c921764"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-4c921765"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">MIP-3a</span></p></td><td class="cl-4c921766"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">-0.078</span></p></td><td class="cl-4c92176e"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.162</span></p></td><td class="cl-4c92176f"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">(-0.395, 0.239)</span></p></td><td class="cl-4c921778"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.6308</span></p></td><td class="cl-4c921782"><p class="cl-4c91ef3c"><span class="cl-4c8ec7ee">0.8058</span></p></td><td class="cl-4c921783"><p class="cl-4c91ef32"><span class="cl-4c8ec7ee">No</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="results-interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="results-interpretation">Results Interpretation</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Automatically generate interpretation based on model results</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ============================================================================</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>n_participants <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(analysis_data<span class="sc">$</span>pid)</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>n_pcos <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(analysis_data<span class="sc">$</span>pid[analysis_data<span class="sc">$</span>pcos_status <span class="sc">==</span> <span class="st">"pcos"</span>])</span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>n_nodisease <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(analysis_data<span class="sc">$</span>pid[analysis_data<span class="sc">$</span>pcos_status <span class="sc">==</span> <span class="st">"no disease"</span>])</span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>n_samples_total <span class="ot">&lt;-</span> <span class="fu">nrow</span>(analysis_data) <span class="sc">/</span> <span class="fu">length</span>(cytokines)  <span class="co"># per cytokine</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>n_cytokines <span class="ot">&lt;-</span> <span class="fu">length</span>(cytokines)</span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"============================================================</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================================</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"             SESSION 2 INTERPRETATION</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             SESSION 2 INTERPRETATION</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"============================================================</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================================</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Research Question:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Research Question:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Do inflammatory marker levels differ between participants with PCOS</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Do inflammatory marker levels differ between participants with PCOS</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"and participants without PCOS after accounting for menstrual-cycle stage?</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>and participants without PCOS after accounting for menstrual-cycle stage?</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Sample Sizes:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sample Sizes:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Total participants:"</span>, n_participants, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Total participants: 27 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"    PCOS:"</span>, n_pcos, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    PCOS: 14 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"    No disease:"</span>, n_nodisease, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    No disease: 13 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Total samples per cytokine:"</span>, n_samples_total, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Total samples per cytokine: 108 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Cytokines analyzed:"</span>, n_cytokines, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Cytokines analyzed: 8 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Key Findings:</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Key Findings:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>sig_cytokines <span class="ot">&lt;-</span> model_results <span class="sc">%&gt;%</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(p_adjusted <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(sig_cytokines) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"After fitting a linear mixed-effects model (log_conc ~ pcos_status + time_point + (1|pid))</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"with Benjamini-Hochberg correction for multiple testing across"</span>, n_cytokines, <span class="st">"cytokines,</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"none of the inflammatory markers showed a statistically significant difference</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"between PCOS and non-PCOS participants at the adjusted significance threshold (alpha = 0.05).</span><span class="sc">\n\n</span><span class="st">"</span>)</span>
+<span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Show the closest to significance</span></span>
+<span id="cb92-11"><a href="#cb92-11" aria-hidden="true" tabindex="-1"></a>  top_cyt <span class="ot">&lt;-</span> model_results <span class="sc">%&gt;%</span> <span class="fu">slice_min</span>(p_adjusted, <span class="at">n =</span> <span class="dv">1</span>)</span>
+<span id="cb92-12"><a href="#cb92-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"The cytokine closest to significance was"</span>, top_cyt<span class="sc">$</span>cytokine[<span class="dv">1</span>],</span>
+<span id="cb92-13"><a href="#cb92-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">"(BH-adjusted p ="</span>, <span class="fu">round</span>(top_cyt<span class="sc">$</span>p_adjusted[<span class="dv">1</span>], <span class="dv">4</span>), <span class="st">").</span><span class="sc">\n\n</span><span class="st">"</span>)</span>
+<span id="cb92-14"><a href="#cb92-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb92-15"><a href="#cb92-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"After fitting linear mixed-effects models (log_conc ~ pcos_status + time_point + (1|pid))</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-16"><a href="#cb92-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"with Benjamini-Hochberg correction for multiple testing, the following cytokine(s)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-17"><a href="#cb92-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"showed statistically significant differences between PCOS and non-PCOS participants:</span><span class="sc">\n\n</span><span class="st">"</span>)</span>
+<span id="cb92-18"><a href="#cb92-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-19"><a href="#cb92-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(sig_cytokines))) {</span>
+<span id="cb92-20"><a href="#cb92-20" aria-hidden="true" tabindex="-1"></a>    cyt <span class="ot">&lt;-</span> sig_cytokines<span class="sc">$</span>cytokine[i]</span>
+<span id="cb92-21"><a href="#cb92-21" aria-hidden="true" tabindex="-1"></a>    est <span class="ot">&lt;-</span> <span class="fu">round</span>(sig_cytokines<span class="sc">$</span>estimate[i], <span class="dv">3</span>)</span>
+<span id="cb92-22"><a href="#cb92-22" aria-hidden="true" tabindex="-1"></a>    ci_l <span class="ot">&lt;-</span> <span class="fu">round</span>(sig_cytokines<span class="sc">$</span>ci_lower[i], <span class="dv">3</span>)</span>
+<span id="cb92-23"><a href="#cb92-23" aria-hidden="true" tabindex="-1"></a>    ci_u <span class="ot">&lt;-</span> <span class="fu">round</span>(sig_cytokines<span class="sc">$</span>ci_upper[i], <span class="dv">3</span>)</span>
+<span id="cb92-24"><a href="#cb92-24" aria-hidden="true" tabindex="-1"></a>    p_adj <span class="ot">&lt;-</span> <span class="fu">round</span>(sig_cytokines<span class="sc">$</span>p_adjusted[i], <span class="dv">4</span>)</span>
+<span id="cb92-25"><a href="#cb92-25" aria-hidden="true" tabindex="-1"></a>    direction <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(est <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">"higher"</span>, <span class="st">"lower"</span>)</span>
+<span id="cb92-26"><a href="#cb92-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-27"><a href="#cb92-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"  -"</span>, cyt, <span class="st">": estimate ="</span>, est, <span class="st">"("</span>, ci_l, <span class="st">","</span>, ci_u, <span class="st">"),</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-28"><a href="#cb92-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"    BH-adjusted p ="</span>, p_adj, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-29"><a href="#cb92-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"    Interpretation:"</span>, cyt, <span class="st">"levels were"</span>, direction, <span class="st">"in PCOS participants</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb92-30"><a href="#cb92-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"    compared to non-PCOS participants after adjusting for menstrual-cycle stage.</span><span class="sc">\n\n</span><span class="st">"</span>)</span>
+<span id="cb92-31"><a href="#cb92-31" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb92-32"><a href="#cb92-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>After fitting a linear mixed-effects model (log_conc ~ pcos_status + time_point + (1|pid))
+with Benjamini-Hochberg correction for multiple testing across 8 cytokines,
+none of the inflammatory markers showed a statistically significant difference
+between PCOS and non-PCOS participants at the adjusted significance threshold (alpha = 0.05).
+
+The cytokine closest to significance was TNFa (BH-adjusted p = 0.3321 ).</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Statistical Methods:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Statistical Methods:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  - Linear mixed-effects models with random intercepts per participant</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  - Linear mixed-effects models with random intercepts per participant</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  - Fixed effects: PCOS status (primary predictor), time point (adjustment)</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  - Fixed effects: PCOS status (primary predictor), time point (adjustment)</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  - Multiple testing correction: Benjamini-Hochberg (BH) procedure</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  - Multiple testing correction: Benjamini-Hochberg (BH) procedure</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  - Log transformation: log1p (log(1 + concentration))</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  - Log transformation: log1p (log(1 + concentration))</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Important Caveat:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Important Caveat:</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  This is an exploratory analysis. The relatively small sample size limits</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  This is an exploratory analysis. The relatively small sample size limits</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  statistical power. Results should be interpreted cautiously and validated</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  statistical power. Results should be interpreted cautiously and validated</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  in larger, independent cohorts.</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  in larger, independent cohorts.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"============================================================</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================================</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="session-information" class="level2">
+<h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.5.3 (2026-03-11)
+Platform: x86_64-pc-linux-gnu
+Running under: Ubuntu 24.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] knitr_1.51       officer_0.7.5    flextable_0.9.12 lmerTest_3.2-1  
+ [5] lme4_2.0-1       Matrix_1.7-4     ggpubr_0.6.3     gtsummary_2.5.1 
+ [9] lubridate_1.9.5  forcats_1.0.1    stringr_1.6.0    dplyr_1.2.0     
+[13] purrr_1.2.1      readr_2.2.0      tidyr_1.3.2      tibble_3.3.1    
+[17] ggplot2_4.0.2    tidyverse_2.0.0 
+
+loaded via a namespace (and not attached):
+  [1] Rdpack_2.6.6            rlang_1.1.7             magrittr_2.0.4         
+  [4] furrr_0.4.0             otel_0.2.0              compiler_4.5.3         
+  [7] systemfonts_1.3.2       vctrs_0.7.1             pkgconfig_2.0.3        
+ [10] crayon_1.5.3            fastmap_1.2.0           backports_1.5.0        
+ [13] labeling_0.4.3          rmarkdown_2.30          markdown_2.0           
+ [16] tzdb_0.5.0              haven_2.5.5             nloptr_2.2.1           
+ [19] ragg_1.5.1              bit_4.6.0               xfun_0.56              
+ [22] labelled_2.16.0         cachem_1.1.0            litedown_0.9           
+ [25] jsonlite_2.0.0          uuid_1.2-2              broom_1.0.12           
+ [28] parallel_4.5.3          R6_2.6.1                bslib_0.10.0           
+ [31] stringi_1.8.7           RColorBrewer_1.1-3      parallelly_1.47.0      
+ [34] car_3.1-5               boot_1.3-32             estimability_1.5.1     
+ [37] jquerylib_0.1.4         numDeriv_2016.8-1.1     Rcpp_1.1.1             
+ [40] parameters_0.29.1       base64enc_0.1-6         splines_4.5.3          
+ [43] timechange_0.4.0        tidyselect_1.2.1        abind_1.4-8            
+ [46] yaml_2.3.12             codetools_0.2-20        listenv_0.10.1         
+ [49] lattice_0.22-9          bayestestR_0.18.1       withr_3.0.2            
+ [52] S7_0.2.1                askpass_1.2.1           coda_0.19-4.1          
+ [55] evaluate_1.0.5          future_1.70.0           zip_2.3.3              
+ [58] xml2_1.5.2              pillar_1.11.1           carData_3.0-6          
+ [61] insight_1.5.1           reformulas_0.4.4        generics_0.1.4         
+ [64] vroom_1.7.0             hms_1.1.4               commonmark_2.0.0       
+ [67] scales_1.4.0            minqa_1.2.8             xtable_1.8-8           
+ [70] globals_0.19.1          glue_1.8.0              gdtools_0.5.1          
+ [73] emmeans_2.0.3           tools_4.5.3             data.table_1.18.2.1    
+ [76] ggsignif_0.6.4          mvtnorm_1.4-0           fs_1.6.7               
+ [79] grid_4.5.3              rbibutils_2.4.1         datawizard_1.3.1       
+ [82] cards_0.8.0             nlme_3.1-168            patchwork_1.3.2        
+ [85] cardx_0.3.3             Formula_1.2-5           cli_3.6.5              
+ [88] textshaping_1.0.5       fontBitstreamVera_0.1.1 broom.helpers_1.22.0   
+ [91] gt_1.3.0                gtable_0.3.6            broom.mixed_0.2.9.7    
+ [94] rstatix_0.7.3           sass_0.4.10             digest_0.6.39          
+ [97] fontquiver_0.2.1        htmlwidgets_1.6.4       farver_2.1.2           
+[100] htmltools_0.5.9         lifecycle_1.0.5         fontLiberation_0.1.0   
+[103] openssl_2.3.5           bit64_4.6.0-1           MASS_7.3-65            </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
